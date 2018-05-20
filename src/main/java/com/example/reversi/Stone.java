@@ -1,7 +1,15 @@
 package com.example.reversi;
 
 public enum Stone {
-  WHITE("○"), BLACK("●"), NONE("・");
+
+  /** 白色の石. */
+  WHITE("○"),
+
+  /** 黒色の石. */
+  BLACK("●"),
+
+  /** 石が何もおいていない. */
+  NONE("・");
 
   private String string;
 
