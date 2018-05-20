@@ -3,8 +3,6 @@ package com.example.reversi;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class BoardImpl implements Board {
 
@@ -75,6 +73,26 @@ public class BoardImpl implements Board {
     return x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT;
   }
 
+  private int innerPut(int x, int y, Stone stone, boolean isReverse) {
+    if(isOutOfRange(x, y)) return 0;
+    if(board[y][x] != Stone.NONE) return 0;
+
+    int count = 0;
+    for(int i = -1; i <= 1; i++) {
+      for(int j = -1; j <= 1; j++) {
+        if(i == 0 && j == 0) continue;
+        int tmp = reverse(x + i, y + j, i, j, stone, isReverse);
+        if(tmp > 0) count += tmp;
+      }
+    }
+
+    if(count > 0) {
+      if(isReverse) board[y][x] = stone;
+      count++;
+    }
+    return count;
+  }
+
   private int reverse(int x, int y, int vx, int vy, Stone stone, boolean isReverse) {
     if(isOutOfRange(x, y)) return -1;
     if(board[y][x] == Stone.NONE) return -1;
@@ -106,26 +124,6 @@ public class BoardImpl implements Board {
       }
     }
     return result;
-  }
-
-  private int innerPut(int x, int y, Stone stone, boolean isReverse) {
-    if(isOutOfRange(x, y)) return 0;
-    if(board[y][x] != Stone.NONE) return 0;
-
-    int count = 0;
-    for(int i = -1; i <= 1; i++) {
-      for(int j = -1; j <= 1; j++) {
-        if(i == 0 && j == 0) continue;
-        int tmp = reverse(x + i, y + j, i, j, stone, isReverse);
-        count += tmp > 0 ? tmp : 0;
-      }
-    }
-
-    if(count > 0) {
-      if(isReverse) board[y][x] = stone;
-      count++;
-    }
-    return count;
   }
 
   private static class Coordinate {
