@@ -63,6 +63,7 @@ public class AlphaBetaPlayer implements Player {
           }
         }
       }
+      return alpha;
     } else {
       for(int i = 1; i <= 8; i++) {
         for(int j = 1; j <= 8; j++) {
@@ -73,8 +74,8 @@ public class AlphaBetaPlayer implements Player {
           }
         }
       }
+      return beta;
     }
-    return eval(board, me);
   }
 
   private int eval(Board board, Stone stone) {
