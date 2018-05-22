@@ -1,174 +1,90 @@
 package com.example.reversi.player;
 
 import com.example.reversi.Board;
-import com.example.reversi.BoardImpl;
 import com.example.reversi.Stone;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
-public class AlphaBetaPlayer extends AbstractBasePlayer {
+public class AlphaBetaPlayer implements Player {
 
-  private static final int HEIGHT = 8;
-  private static final int WIDTH = 8;
-  private final int nodeDepth;
+  private Random random = new Random();
 
-//  private final int[][] scoreBoard = {
-//          { 30, -12,  0, -1, -1,  0, -12,  30},
-//          {-12, -15, -3, -3, -3, -3, -15, -12},
-//          {  0,  -3,  0, -1, -1,  0,  -3,   0},
-//          { -1,  -3, -1, -1, -1, -1,  -3,  -1},
-//          { -1,  -3, -1, -1, -1, -1,  -3,  -1},
-//          {  0,  -3,  0, -1, -1,  0,  -3,   0},
-//          {-12, -15, -3, -3, -3, -3, -15, -12},
-//          { 30, -12,  0, -1, -1,  0, -12,  30}
-//  };
+  private int searchDepth = 3;
+
+  public AlphaBetaPlayer() {}
+
+  public AlphaBetaPlayer(int searchDepth) {
+    this.searchDepth = searchDepth;
+  }
 
   private final int[][] scoreBoard = {
-          { 9999, -20,  20,  5,  5,  20, -20,  9999},
+          { 320, -20,  20,  5,  5,  20, -20,  320},
           { -20, -40,  -5, -5, -5,  -5, -40,  -20},
           {  20,  -5,  15,  3,  3,  15,  -5,   20},
           {   5,  -5,   3,  3,  3,   3,  -5,    5},
           {   5,  -5,   3,  3,  3,   3,  -5,    5},
           {  20,  -5,  15,  3,  3,  15,  -5,   20},
           { -20, -40,  -5, -5, -5,  -5, -40,  -20},
-          { 9999, -20,  20,  5,  5,  20, -20,  9999},
+          { 320, -20,  20,  5,  5,  20, -20,  320},
   };
 
-  public AlphaBetaPlayer(Stone stone, Board board) {
-    this(stone, board, 5);
-  }
-
-  public AlphaBetaPlayer(Stone stone, Board board, int depth) {
-    super(stone, board);
-    this.nodeDepth = depth;
-  }
-
   @Override
-  protected int[] getArea() {
-    if(nodeDepth <= 0) {
-      Set<int[]> set = board.getCanPutArea(stone);
-      int[][] array = set.toArray(new int[set.size()][2]);
-      Random random = new Random();
-      return array[random.nextInt(array.length)];
+  public Position play(Board board, Stone stone) {
+    Board clone = board.clone();
+    int max = Integer.MIN_VALUE;
+    Map<Integer, List<Position>> map = new HashMap<>();
+    for(int i = 1; i <= 8; i++) {
+      for(int j = 1; j <= 8; j++) {
+        if(clone.put(i, j, stone) > 0) {
+          int tmp = alphaBeta(clone, stone, stone.reverse(), Integer.MIN_VALUE, Integer.MAX_VALUE, searchDepth);
+          if(!map.containsKey(tmp)) map.put(tmp, new ArrayList<>());
+          max = Math.max(tmp, max);
+          map.get(tmp).add(Position.at(i, j));
+          clone = board.clone();
+        }
+      }
     }
-    BoardNode node = new BoardNode(nodeDepth, stone, board);
-    int calculated = alphaBeta(node, Integer.MIN_VALUE, Integer.MAX_VALUE);
-    for(BoardNode nextNode : node.getNextNodes()) {
-      if(nextNode.getEval() == calculated) return new int[]{nextNode.getX(), nextNode.getY()};
-    }
-    return new int[]{-1, -1};
+    List<Position> positions = map.get(max);
+    if(positions.size() == 0) throw new IllegalArgumentException("this board cannot put.");
+    return positions.get(random.nextInt(positions.size()));
   }
 
-  private int alphaBeta(BoardNode node, int alpha, int beta) {
-    if(node.getNextNodes().size() == 0) return node.calculateScore(stone);
-    if(node.getTurn() == stone) {
-      for(BoardNode nextNode : node.getNextNodes()) {
-        alpha = Math.max(alpha, alphaBeta(nextNode, alpha, beta));
-        if(alpha >= beta) break;
+  private int alphaBeta(Board board, Stone me, Stone turn, int alpha, int beta, int depth) {
+    if(depth <= 0) return eval(board, me);
+    if(!board.canPut(turn)) turn = turn.reverse();
+    Board clone = board.clone();
+    if(turn == me) {
+      for(int i = 1; i <= 8; i++) {
+        for(int j = 1; j <= 8; j++) {
+          if(clone.put(i, j, turn) > 0) {
+            alpha = Math.max(alpha, alphaBeta(clone, me, turn.reverse(), alpha, beta, depth - 1));
+            if(alpha >= beta) return alpha;
+            clone = board.clone();
+          }
+        }
       }
-      for(BoardNode nextNode : node.getNextNodes()) {
-        nextNode.setEval(alpha);
-      }
-      return alpha;
     } else {
-      for(BoardNode nextNode : node.getNextNodes()) {
-        beta = Math.min(beta, alphaBeta(nextNode, alpha, beta));
-        if(alpha >= beta) break;
+      for(int i = 1; i <= 8; i++) {
+        for(int j = 1; j <= 8; j++) {
+          if(clone.put(i, j, turn) > 0) {
+            beta = Math.min(beta, alphaBeta(clone, me, turn.reverse(), alpha, beta, depth - 1));
+            if(alpha >= beta) return beta;
+            clone = board.clone();
+          }
+        }
       }
-      for(BoardNode nextNode : node.getNextNodes()) {
-        nextNode.setEval(beta);
-      }
-      return beta;
     }
+    return eval(board, me);
   }
 
-  private class BoardNode {
-    private List<BoardNode> nodes = new ArrayList<>();
-    private Board board;
-    private Stone turn;
-    private int x;
-    private int y;
-    private int eval;
-
-    public BoardNode(int depth, Stone stone, Board board) {
-      this(depth, -1, -1, stone, board, true);
-    }
-
-    private BoardNode(int depth, int x, int y, Stone turn, Board board, boolean isFirst) {
-      this.board = board;
-      this.x = x;
-      this.y = y;
-      this.turn = turn;
-      Stone nextTurn = isFirst ? turn : nextTurn(turn);
-
-      if(depth <= 0) return;
-      Set<int[]> areas = this.board.getCanPutArea(nextTurn);
-
-      for(int[] area : areas) {
-        Board nextBoard = new BoardImpl(board);
-        nextBoard.put(area[0], area[1], nextTurn);
-        BoardNode nextNode = new BoardNode(depth - 1, area[0], area[1], nextTurn, nextBoard, false);
-        nodes.add(nextNode);
+  private int eval(Board board, Stone stone) {
+    int score = 0;
+    for(int i = 0; i < 8; i++) {
+      for(int j = 0; j < 8; j++) {
+        if(board.get(i + 1, j + 1) == stone) score += scoreBoard[j][i];
+        else if(board.get(i + 1, j + 1) == stone.reverse()) score -= scoreBoard[j][i];
       }
     }
-
-    public List<BoardNode> getNextNodes() {
-      return this.nodes;
-    }
-
-    public int calculateScore(Stone stone) {
-      int score = 0;
-      for(int i = 1; i <= HEIGHT; i++) {
-        for(int j = 1; j <= WIDTH; j++) {
-          if(this.board.get(j, i) != stone) continue;
-          score += scoreBoard[i - 1][j - 1];
-        }
-      }
-      return score;
-    }
-
-    public int getX() {
-      return this.x;
-    }
-
-    public int getY() {
-      return this.y;
-    }
-
-    public Stone getTurn() {
-      return this.turn;
-    }
-
-    public Board getBoard() {
-      return this.board;
-    }
-
-    public int getEval() {
-      return eval;
-    }
-
-    public void setEval(int eval) {
-      this.eval = eval;
-    }
-
-    private Stone nextTurn(Stone stone) {
-      Stone nextStone;
-      if(stone == Stone.WHITE) {
-        nextStone = Stone.BLACK;
-      } else {
-        nextStone = Stone.WHITE;
-      }
-      if(!this.board.canPut(nextStone)) {
-        if(stone == Stone.WHITE) {
-          nextStone = Stone.BLACK;
-        } else {
-          nextStone = Stone.WHITE;
-        }
-      }
-      return nextStone;
-    }
+    return score;
   }
 }

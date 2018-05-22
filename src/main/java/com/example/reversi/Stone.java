@@ -20,4 +20,9 @@ public enum Stone {
   public String asString() {
     return string;
   }
+
+  public Stone reverse() {
+    if(this == NONE) return NONE;
+    return this == BLACK ? WHITE : BLACK;
+  }
 }

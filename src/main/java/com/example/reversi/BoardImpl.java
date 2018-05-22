@@ -1,9 +1,5 @@
 package com.example.reversi;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-
 /**
  * {@linkplain Board}の実装クラス.<br />
  * 再帰的にひっくり返し処理を行うがリバーシの仕様上たかだか8回の再帰ですむため問題ないとしている.
@@ -17,7 +13,7 @@ public class BoardImpl implements Board {
   private static final int HEIGHT = 8;
 
   /** ボードの実態. */
-  private final Stone[][] board = new Stone[HEIGHT][WIDTH];
+  private Stone[][] board = new Stone[HEIGHT][WIDTH];
 
   /**
    * コンストラクタ.
@@ -34,35 +30,29 @@ public class BoardImpl implements Board {
     board[3][4] = Stone.BLACK;
   }
 
-  /**
-   * コンストラクタ.<br>
-   * ボードを引数にとりそのボードの状態と同じ状態にする.<br>
-   * ディープコピーを行うため内部の状態は共有しない.
-   * @param newBoard ボード
-   */
-  public BoardImpl(Board newBoard) {
-    if(newBoard == null) throw new IllegalArgumentException("board must not be null.");
-    for(int i = 0; i < HEIGHT; i++) {
-      for(int j = 0; j < WIDTH; j++) {
-        this.board[i][j] = newBoard.get(j + 1, i + 1);
-      }
-    }
-  }
-
   @Override
   public int put(int x, int y, Stone stone) {
     return innerPut(x - 1, y - 1, stone, true);
   }
 
   @Override
-  public boolean canPut(Stone stone) {
-    if(stone == null) return false;
-    Set<Coordinate> targets = getInnerCanPutArea(stone);
-    return targets.size() != 0;
+  public int put(int x, int y, Stone stone, boolean isReverse) {
+    return innerPut(x - 1, y - 1, stone, false);
   }
 
   @Override
-  public int getCount(Stone stone) {
+  public boolean canPut(Stone stone) {
+    if(stone == null) return false;
+    for(int i = 1; i <= HEIGHT; i++) {
+      for(int j = 1; j <= WIDTH; j++) {
+        if(put(j, i, stone, false) > 0) return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public int count(Stone stone) {
     int result = 0;
     for(int i = 0; i < HEIGHT; i++) {
       for(int j = 0; j < WIDTH; j++) {
@@ -75,15 +65,6 @@ public class BoardImpl implements Board {
   @Override
   public boolean isFinish() {
     return !canPut(Stone.WHITE) && !canPut(Stone.BLACK);
-  }
-
-  @Override
-  public Set<int[]> getCanPutArea(Stone stone) {
-    Set<int[]> result = new HashSet<>();
-    for(Coordinate coordinate : getInnerCanPutArea(stone)) {
-      result.add(new int[]{coordinate.getX() + 1, coordinate.getY() + 1});
-    }
-    return result;
   }
 
   @Override
@@ -102,6 +83,21 @@ public class BoardImpl implements Board {
     }
     System.out.println();
     System.out.println();
+  }
+
+  @Override
+  public Board clone() {
+    BoardImpl clone;
+    try {
+      clone = (BoardImpl) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new InternalError(e);
+    }
+    clone.board = board.clone();
+    for(int i = 0; i < HEIGHT; i++) {
+      clone.board[i] = board[i].clone();
+    }
+    return clone;
   }
 
   /**
@@ -179,86 +175,5 @@ public class BoardImpl implements Board {
       return depth + 1;
     }
     return depth;
-  }
-
-  /**
-   * 石の色を指定しどの座標に置くことができるかの一覧を返す.<br />
-   * どこにも置けない場合は空の{@linkplain java.util.Set}を返す.
-   * @param stone 置く石
-   * @return 置くことのできる場所の一覧
-   */
-  private Set<Coordinate> getInnerCanPutArea(Stone stone) {
-    Set<Coordinate> result = new HashSet<>();
-    for(int y = 0; y < HEIGHT; y++) {
-      for (int x = 0; x < WIDTH; x++) {
-        if (board[y][x] != Stone.NONE) continue;
-        for (int i = -1; i <= 1; i++) {
-          for (int j = -1; j <= 1; j++) {
-            if (i == 0 && j == 0) continue;
-            if (isOutOfRange(x + i, y + j)) continue;
-            if (board[y + j][x + i] == Stone.NONE) continue;
-
-            if (innerPut(x, y, stone, false) > 0) {
-              result.add(new Coordinate(x, y));
-            }
-          }
-        }
-      }
-    }
-    return result;
-  }
-
-  /**
-   * X軸とY軸を保存する座標クラス.<br />
-   * {@linkplain Object#hashCode()}と{@linkplain Object#equals(Object)}をオーバーライドしているため、
-   * X軸とY軸が同じであれば同一とみなす.
-   */
-  private static class Coordinate {
-
-    /** X軸. */
-    private final int x;
-
-    /** Y軸. */
-    private final int y;
-
-    /**
-     * コンストラクタ.
-     * @param x X軸の値
-     * @param y Y軸の値
-     */
-    public Coordinate(int x, int y) {
-      this.x = x;
-      this.y = y;
-    }
-
-    /**
-     * X軸の値を取得する.
-     * @return X軸の値
-     */
-    public int getX() {
-      return x;
-    }
-
-    /**
-     * Y軸の値を取得する.
-     * @return Y軸の値
-     */
-    public int getY() {
-      return y;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof Coordinate)) return false;
-      Coordinate that = (Coordinate) o;
-      return getX() == that.getX() &&
-              getY() == that.getY();
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(getX(), getY());
-    }
   }
 }

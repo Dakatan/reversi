@@ -86,8 +86,8 @@ public class BoardImplTest {
   }
 
   private void assertTest(Board target, int white, int black, int none) {
-    assertThat(target.getCount(Stone.WHITE), is(equalTo(white)));
-    assertThat(target.getCount(Stone.BLACK), is(equalTo(black)));
-    assertThat(target.getCount(Stone.NONE), is(equalTo(none)));
+    assertThat(target.count(Stone.WHITE), is(equalTo(white)));
+    assertThat(target.count(Stone.BLACK), is(equalTo(black)));
+    assertThat(target.count(Stone.NONE), is(equalTo(none)));
   }
 }
