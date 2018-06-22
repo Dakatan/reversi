@@ -13,24 +13,29 @@ public class BitBoard implements Board {
   @Override
   public int put(int x, int y, Stone stone, boolean isReverse) {
     long move = convert(x, y);
+    long rev;
+    long reversedBlack;
+    long reversedWhite;
+    int result;
     if(stone == Stone.BLACK) {
-      long rev = rev(black, white, move);
-      long tmp = move | rev;
-      if(isReverse) {
-        black ^= tmp;
-        white ^= rev;
-      }
-      return Long.bitCount(tmp);
-    } else if(stone == Stone.WHITE) {
-      long rev = rev(white, black, move);
-      long tmp = move | rev;
-      if(isReverse) {
-        white ^= tmp;
-        black ^= rev;
-      }
-      return Long.bitCount(tmp);
+      rev = rev(black, white, move);
+      reversedBlack = black ^ move | rev;
+      reversedWhite = white ^ rev;
+      result = Long.bitCount(reversedBlack ^ black);
+    } else {
+      rev = rev(white, black, move);
+      reversedBlack = black ^ rev;
+      reversedWhite = white ^ move | rev;
+      result = Long.bitCount(reversedWhite ^ white);
     }
-    return 0;
+    if(result == 1) {
+      result = 0;
+    }
+    if(isReverse && result > 0) {
+      white = reversedWhite;
+      black = reversedBlack;
+    }
+    return result;
   }
 
   @Override
@@ -50,10 +55,9 @@ public class BitBoard implements Board {
   public int count(Stone stone) {
     if(stone == Stone.BLACK) {
       return Long.bitCount(black);
-    } else if(stone == Stone.WHITE) {
+    } else {
       return Long.bitCount(white);
     }
-    return 0;
   }
 
   @Override
@@ -70,78 +74,78 @@ public class BitBoard implements Board {
       return false;
     }
 
-    long leftRight = you & 0x7e7e7e7e7e7e7e7eL;
-    long upDown    = you & 0x00FFFFFFFFFFFF00L;
-    long allSide   = you & 0x007e7e7e7e7e7e00L;
+    long vertical = you & 0x7e7e7e7e7e7e7e7eL;
+    long parallel = you & 0x00FFFFFFFFFFFF00L;
+    long diagonal = you & 0x007e7e7e7e7e7e00L;
 
     long blank = ~(black | white);
 
     long tmp;
     long result = 0;
 
-    tmp     = leftRight & (me << 1);
-    tmp    |= leftRight & (tmp << 1);
-    tmp    |= leftRight & (tmp << 1);
-    tmp    |= leftRight & (tmp << 1);
-    tmp    |= leftRight & (tmp << 1);
-    tmp    |= leftRight & (tmp << 1);
-    result |= blank     & (tmp << 1);
+    tmp     = vertical & (me  << 1);
+    tmp    |= vertical & (tmp << 1);
+    tmp    |= vertical & (tmp << 1);
+    tmp    |= vertical & (tmp << 1);
+    tmp    |= vertical & (tmp << 1);
+    tmp    |= vertical & (tmp << 1);
+    result |= blank    & (tmp << 1);
 
-    tmp     = leftRight & (me >>> 1);
-    tmp    |= leftRight & (tmp >>> 1);
-    tmp    |= leftRight & (tmp >>> 1);
-    tmp    |= leftRight & (tmp >>> 1);
-    tmp    |= leftRight & (tmp >>> 1);
-    tmp    |= leftRight & (tmp >>> 1);
-    result |= blank     & (tmp >>> 1);
+    tmp     = vertical & (me  >>> 1);
+    tmp    |= vertical & (tmp >>> 1);
+    tmp    |= vertical & (tmp >>> 1);
+    tmp    |= vertical & (tmp >>> 1);
+    tmp    |= vertical & (tmp >>> 1);
+    tmp    |= vertical & (tmp >>> 1);
+    result |= blank    & (tmp >>> 1);
 
-    tmp     = upDown & (me << 8);
-    tmp    |= upDown & (tmp << 8);
-    tmp    |= upDown & (tmp << 8);
-    tmp    |= upDown & (tmp << 8);
-    tmp    |= upDown & (tmp << 8);
-    tmp    |= upDown & (tmp << 8);
-    result |= blank  & (tmp << 8);
+    tmp     = parallel & (me  << 8);
+    tmp    |= parallel & (tmp << 8);
+    tmp    |= parallel & (tmp << 8);
+    tmp    |= parallel & (tmp << 8);
+    tmp    |= parallel & (tmp << 8);
+    tmp    |= parallel & (tmp << 8);
+    result |= blank    & (tmp << 8);
 
-    tmp     = upDown & (me >>> 8);
-    tmp    |= upDown & (tmp >>> 8);
-    tmp    |= upDown & (tmp >>> 8);
-    tmp    |= upDown & (tmp >>> 8);
-    tmp    |= upDown & (tmp >>> 8);
-    tmp    |= upDown & (tmp >>> 8);
-    result |= blank  & (tmp >>> 8);
+    tmp     = parallel & (me  >>> 8);
+    tmp    |= parallel & (tmp >>> 8);
+    tmp    |= parallel & (tmp >>> 8);
+    tmp    |= parallel & (tmp >>> 8);
+    tmp    |= parallel & (tmp >>> 8);
+    tmp    |= parallel & (tmp >>> 8);
+    result |= blank    & (tmp >>> 8);
 
-    tmp     = allSide & (me << 7);
-    tmp    |= allSide & (tmp << 7);
-    tmp    |= allSide & (tmp << 7);
-    tmp    |= allSide & (tmp << 7);
-    tmp    |= allSide & (tmp << 7);
-    tmp    |= allSide & (tmp << 7);
-    result |= blank   & (tmp << 7);
+    tmp     = diagonal & (me  << 7);
+    tmp    |= diagonal & (tmp << 7);
+    tmp    |= diagonal & (tmp << 7);
+    tmp    |= diagonal & (tmp << 7);
+    tmp    |= diagonal & (tmp << 7);
+    tmp    |= diagonal & (tmp << 7);
+    result |= blank    & (tmp << 7);
 
-    tmp     = allSide & (me << 9);
-    tmp    |= allSide & (tmp << 9);
-    tmp    |= allSide & (tmp << 9);
-    tmp    |= allSide & (tmp << 9);
-    tmp    |= allSide & (tmp << 9);
-    tmp    |= allSide & (tmp << 9);
-    result |= blank   & (tmp << 9);
+    tmp     = diagonal & (me  << 9);
+    tmp    |= diagonal & (tmp << 9);
+    tmp    |= diagonal & (tmp << 9);
+    tmp    |= diagonal & (tmp << 9);
+    tmp    |= diagonal & (tmp << 9);
+    tmp    |= diagonal & (tmp << 9);
+    result |= blank    & (tmp << 9);
 
-    tmp     = allSide & (me >>> 9);
-    tmp    |= allSide & (tmp >>> 9);
-    tmp    |= allSide & (tmp >>> 9);
-    tmp    |= allSide & (tmp >>> 9);
-    tmp    |= allSide & (tmp >>> 9);
-    tmp    |= allSide & (tmp >>> 9);
-    result |= blank   & (tmp >>> 9);
+    tmp     = diagonal & (me  >>> 9);
+    tmp    |= diagonal & (tmp >>> 9);
+    tmp    |= diagonal & (tmp >>> 9);
+    tmp    |= diagonal & (tmp >>> 9);
+    tmp    |= diagonal & (tmp >>> 9);
+    tmp    |= diagonal & (tmp >>> 9);
+    result |= blank    & (tmp >>> 9);
 
-    tmp     = allSide & (me >>> 7);
-    tmp    |= allSide & (tmp >>> 7);
-    tmp    |= allSide & (tmp >>> 7);
-    tmp    |= allSide & (tmp >>> 7);
-    tmp    |= allSide & (tmp >>> 7);
-    tmp    |= allSide & (tmp >>> 7);
-    result |= blank   & (tmp >>> 7);
+    tmp     = diagonal & (me  >>> 7);
+    tmp    |= diagonal & (tmp >>> 7);
+    tmp    |= diagonal & (tmp >>> 7);
+    tmp    |= diagonal & (tmp >>> 7);
+    tmp    |= diagonal & (tmp >>> 7);
+    tmp    |= diagonal & (tmp >>> 7);
+    result |= blank    & (tmp >>> 7);
 
     return Long.bitCount(result) != 0;
   }
@@ -165,6 +169,7 @@ public class BitBoard implements Board {
       }
       System.out.println();
     }
+    System.out.println();
   }
 
   public long convert(int x, int y) {
@@ -191,7 +196,7 @@ public class BitBoard implements Board {
   private long rev(long player1, long player2, long move) {
     long rev = 0;
     if(((player1 | player2) & move) != 0) return rev;
-    for(int i = 0; i < 7; i++) {
+    for(int i = 0; i < 8; i++) {
       long mask = transfer(i, move);
       long memo = 0;
       while (mask != 0 && (mask & player2) != 0) {
