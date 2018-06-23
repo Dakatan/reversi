@@ -2,6 +2,8 @@ package com.example.reversi.player;
 
 import com.example.reversi.Board;
 import com.example.reversi.Stone;
+import com.example.reversi.player.evaluation.ReversiStrategy;
+import com.example.reversi.player.evaluation.StaticReversiStrategy;
 
 import java.util.*;
 
@@ -11,22 +13,18 @@ public class AlphaBetaPlayer implements Player {
 
   private int searchDepth = 3;
 
+  private ReversiStrategy strategy = new StaticReversiStrategy();
+
   public AlphaBetaPlayer() {}
 
   public AlphaBetaPlayer(int searchDepth) {
     this.searchDepth = searchDepth;
   }
 
-  private final int[][] scoreBoard = {
-          { 320, -20,  20,  5,  5,  20, -20,  320},
-          { -20, -40,  -5, -5, -5,  -5, -40,  -20},
-          {  20,  -5,  15,  3,  3,  15,  -5,   20},
-          {   5,  -5,   3,  3,  3,   3,  -5,    5},
-          {   5,  -5,   3,  3,  3,   3,  -5,    5},
-          {  20,  -5,  15,  3,  3,  15,  -5,   20},
-          { -20, -40,  -5, -5, -5,  -5, -40,  -20},
-          { 320, -20,  20,  5,  5,  20, -20,  320},
-  };
+  public AlphaBetaPlayer(int searchDepth, ReversiStrategy strategy) {
+    this.searchDepth = searchDepth;
+    this.strategy = strategy;
+  }
 
   @Override
   public Position play(Board board, Stone stone) {
@@ -50,7 +48,7 @@ public class AlphaBetaPlayer implements Player {
   }
 
   private int alphaBeta(Board board, Stone me, Stone turn, int alpha, int beta, int depth) {
-    if(depth <= 0) return eval(board, me);
+    if(depth <= 0) return strategy.eval(board, me);
     if(!board.canPut(turn)) turn = turn.reverse();
     Board clone = board.clone();
     if(turn == me) {
@@ -76,16 +74,5 @@ public class AlphaBetaPlayer implements Player {
       }
       return beta;
     }
-  }
-
-  private int eval(Board board, Stone stone) {
-    int score = 0;
-    for(int i = 0; i < 8; i++) {
-      for(int j = 0; j < 8; j++) {
-        if(board.get(i + 1, j + 1) == stone) score += scoreBoard[j][i];
-        else if(board.get(i + 1, j + 1) == stone.reverse()) score -= scoreBoard[j][i];
-      }
-    }
-    return score;
   }
 }
