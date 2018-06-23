@@ -10,17 +10,27 @@ import java.util.Queue;
 public class DynamicReversiStrategy implements ReversiStrategy {
 
   @Override
-  public int[][] getScoreBoard(Board board, Stone stone) {
-    int[][] scoreBoard = {
-          { 320, -20,  20,  5,  5,  20, -20,  320},
-          { -20, -40,  -5, -5, -5,  -5, -40,  -20},
-          {  20,  -5,  15,  3,  3,  15,  -5,   20},
-          {   5,  -5,   3,  3,  3,   3,  -5,    5},
-          {   5,  -5,   3,  3,  3,   3,  -5,    5},
-          {  20,  -5,  15,  3,  3,  15,  -5,   20},
-          { -20, -40,  -5, -5, -5,  -5, -40,  -20},
-          { 320, -20,  20,  5,  5,  20, -20,  320}
-    };
+  public int eval(Board board, Stone stone) {
+    int score = 0;
+    int[][] scoreBoard = getScoreBoard(board, stone);
+    for(int i = 0; i < 8; i++) {
+      for(int j = 0; j < 8; j++) {
+        if(board.get(i + 1, j + 1) == stone) {
+          score += scoreBoard[j][i];
+        } else if(board.get(i + 1, j + 1) == stone.reverse()) {
+          score -= scoreBoard[j][i];
+        }
+        int count = board.count(Stone.BLACK) + board.count(Stone.WHITE);
+        if(board.get(i + 1, j + 1) == stone) {
+          score += count < 20 ? 10 : -10;
+        }
+      }
+    }
+    return score;
+  }
+
+  protected int[][] getScoreBoard(Board board, Stone stone) {
+    int[][] scoreBoard = getScoreBoardBase();
 
     for(Direction direction : Direction.values()) {
       Queue<PositionSupport> queue = new ArrayDeque<>();
