@@ -10,8 +10,15 @@ public interface ReversiStrategy {
     int[][] scoreBoard = getScoreBoard(board, stone);
     for(int i = 0; i < 8; i++) {
       for(int j = 0; j < 8; j++) {
-        if(board.get(i + 1, j + 1) == stone) score += scoreBoard[j][i];
-        else if(board.get(i + 1, j + 1) == stone.reverse()) score -= scoreBoard[j][i];
+        if(board.get(i + 1, j + 1) == stone) {
+          score += scoreBoard[j][i];
+        } else if(board.get(i + 1, j + 1) == stone.reverse()) {
+          score -= scoreBoard[j][i];
+        }
+        int count = board.count(Stone.BLACK) + board.count(Stone.WHITE);
+        if(board.get(i + 1, j + 1) == stone) {
+          score += count < 20 ? 10 : -10;
+        }
       }
     }
     return score;
