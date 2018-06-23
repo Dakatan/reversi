@@ -1,8 +1,19 @@
 package com.example.reversi;
 
+/**
+ * リバーシのビットボード実装.<br>
+ * 通常実装の1.5倍くらいの処理性能.
+ */
 public class BitBoard implements Board {
 
+  /**
+   * 黒の盤面を表す.
+   */
   private long black = 0x0000000810000000L;
+
+  /**
+   * 白の盤面を表す.
+   */
   private long white = 0x0000001008000000L;
 
   @Override
@@ -18,12 +29,12 @@ public class BitBoard implements Board {
     long reversedWhite;
     int result;
     if (stone == Stone.BLACK) {
-      rev = rev(black, white, move);
+      rev = reverse(black, white, move);
       reversedBlack = black ^ move | rev;
       reversedWhite = white ^ rev;
       result = Long.bitCount(reversedBlack ^ black);
     } else {
-      rev = rev(white, black, move);
+      rev = reverse(white, black, move);
       reversedBlack = black ^ rev;
       reversedWhite = white ^ move | rev;
       result = Long.bitCount(reversedWhite ^ white);
@@ -172,6 +183,13 @@ public class BitBoard implements Board {
     System.out.println();
   }
 
+  /**
+   * X、Y軸をビットに変換する.
+   *
+   * @param x X座標
+   * @param y Y座標
+   * @return X、Y軸のビット
+   */
   public long convert(int x, int y) {
     long mask = 0x8000000000000000L;
     mask = mask >>> (x - 1);
@@ -179,6 +197,13 @@ public class BitBoard implements Board {
     return mask;
   }
 
+  /**
+   * 上下左右のビットマップを取得する.
+   *
+   * @param type 上下左右のフラグ
+   * @param mask マスク
+   * @return 上下左右に閉じたひっくり返したビット
+   */
   private long transfer(int type, long mask) {
     switch (type) {
       case 0:
@@ -198,11 +223,19 @@ public class BitBoard implements Board {
       case 7:
         return (mask << 9) & 0xfefefefefefefe00L; // 左上
       default:
-        return 0;
+        throw new IllegalArgumentException("unsupported type.");
     }
   }
 
-  private long rev(long player1, long player2, long move) {
+  /**
+   * ひっくり返したビットを取得する.
+   *
+   * @param player1 ひっくり返すプレイヤーのビット
+   * @param player2 ひっくり返されるプレイヤーのビット
+   * @param move    ひっくり返すビット
+   * @return ひっくり返したビット
+   */
+  private long reverse(long player1, long player2, long move) {
     long rev = 0;
     if (((player1 | player2) & move) != 0) return rev;
     for (int i = 0; i < 8; i++) {
