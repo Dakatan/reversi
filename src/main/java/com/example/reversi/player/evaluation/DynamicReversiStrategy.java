@@ -13,6 +13,7 @@ public class DynamicReversiStrategy implements ReversiStrategy {
   public int eval(Board board, Stone stone) {
     int score = 0;
     int[][] scoreBoard = getScoreBoard(board, stone);
+    int count = board.count(Stone.BLACK) + board.count(Stone.WHITE);
     for(int i = 0; i < 8; i++) {
       for(int j = 0; j < 8; j++) {
         if(board.get(i + 1, j + 1) == stone) {
@@ -20,16 +21,21 @@ public class DynamicReversiStrategy implements ReversiStrategy {
         } else if(board.get(i + 1, j + 1) == stone.reverse()) {
           score -= scoreBoard[j][i];
         }
-        int count = board.count(Stone.BLACK) + board.count(Stone.WHITE);
         if(board.get(i + 1, j + 1) == stone) {
-          score += count < 20 ? 10 : -10;
+          if(count < 20) {
+            score -= 20;
+          } else if (count < 40) {
+            score -= 10;
+          } else {
+            score += 20;
+          }
         }
       }
     }
     return score;
   }
 
-  protected int[][] getScoreBoard(Board board, Stone stone) {
+  private int[][] getScoreBoard(Board board, Stone stone) {
     int[][] scoreBoard = getScoreBoardBase();
 
     for(Direction direction : Direction.values()) {
