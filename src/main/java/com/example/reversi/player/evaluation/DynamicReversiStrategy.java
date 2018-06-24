@@ -22,13 +22,19 @@ public class DynamicReversiStrategy implements ReversiStrategy {
           score -= scoreBoard[j][i];
         }
         if(board.get(i + 1, j + 1) == stone) {
-          if(count < 20) {
-            score -= 20;
-          } else if (count < 40) {
+          if(count < 24) {
             score -= 10;
+          } else if (count < 44) {
+            score -= 5;
           } else {
-            score += 20;
+            score += 5;
           }
+        }
+        if(count > 45 && board.put(i + 1, j + 1, stone) > 0) {
+          score += 5;
+        }
+        if(count > 45 && board.put(i + 1, j + 1, stone.reverse()) > 0) {
+          score -= 5;
         }
       }
     }
@@ -50,11 +56,15 @@ public class DynamicReversiStrategy implements ReversiStrategy {
         PositionSupport position1 = new PositionSupport(position.x(), position.y() + direction.vy(), 50);
         PositionSupport position2 = new PositionSupport(position.x() + direction.vx(), position.y(), 50);
 
-        if(!queue.contains(position1) && direction.inRange(position1.x(), position1.y())) queue.offer(position1);
-        if(!queue.contains(position2) && direction.inRange(position2.x(), position2.y())) queue.offer(position2);
+        if(!queue.contains(position1) && inRange(position1)) queue.offer(position1);
+        if(!queue.contains(position2) && inRange(position2)) queue.offer(position2);
       }
     }
     return scoreBoard;
+  }
+
+  private boolean inRange(PositionSupport position) {
+    return position.x() < 0 || position.y() < 0 || position.x() >= 8 || position.y() >= 8;
   }
 
   private static class PositionSupport {
@@ -96,27 +106,7 @@ public class DynamicReversiStrategy implements ReversiStrategy {
   }
 
   private enum Direction {
-    AREA1(1, 1, 0, 0) {
-      @Override
-      public boolean inRange(int x, int y) {
-        return x < 4 && y < 4;
-      }
-    }, AREA2(1, -1, 0 ,7) {
-      @Override
-      public boolean inRange(int x, int y) {
-        return x < 4 && y > 3;
-      }
-    }, AREA3(-1, 1, 7, 0) {
-      @Override
-      public boolean inRange(int x, int y) {
-        return x > 3 && y < 4;
-      }
-    }, AREA4(-1, -1, 7, 7) {
-      @Override
-      public boolean inRange(int x, int y) {
-        return x > 3 && y > 3;
-      }
-    };
+    AREA1(1, 1, 0, 0), AREA2(1, -1, 0 ,7), AREA3(-1, 1, 7, 0), AREA4(-1, -1, 7, 7);
 
     private final int vx;
     private final int vy;
@@ -145,7 +135,5 @@ public class DynamicReversiStrategy implements ReversiStrategy {
     public int sy() {
       return sy;
     }
-
-    public abstract boolean inRange(int x, int y);
   }
 }
