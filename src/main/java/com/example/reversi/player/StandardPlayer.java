@@ -24,18 +24,13 @@ public class StandardPlayer implements Player {
       }
     }
 
-    for (DTO dto : set) {
-      if (!dto.isNearCorner()) {
-        return Position.at(dto.getX(), dto.getY());
-      }
-    }
-
     DTO first = set.first();
     return Position.at(first.getX(), first.getY());
   }
 
   /**
    * X、Y、ひっくり返すカウント、を格納できるDTOクラス.<br>
+   * 大きい順に並べ替えたいので大小関係は逆に見える.
    */
   private static class DTO implements Comparable<DTO> {
 
@@ -132,13 +127,19 @@ public class StandardPlayer implements Player {
     @Override
     public int compareTo(DTO dto) {
       if (isCorner() && dto.isCorner()) {
-        return value - dto.getValue();
+        return dto.getValue() - value;
       } else if (isCorner() && !dto.isCorner()) {
-        return 1;
+        return -1;
       } else if (!isCorner() && dto.isCorner()) {
+        return 1;
+      } else if (isNearCorner() && dto.isNearCorner()) {
+        return dto.getValue() - value;
+      } else if (isNearCorner() && !dto.isNearCorner()) {
+        return 1;
+      } else if (!isNearCorner() && dto.isNearCorner()) {
         return -1;
       } else {
-        return value - dto.getValue();
+        return dto.getValue() - value;
       }
     }
   }
